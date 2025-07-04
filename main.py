@@ -136,13 +136,19 @@ def read_root():
     return {"status": "API de Alerta de Preços funcionando!", "fonte": "Mercado Bitcoin", "preco_em_cache": cache_preco}
 
 @app.get("/preco-atual", tags=["Preço"])
-def obter_preco_atual_do_cache():
-    """Endpoint que retorna o preço atual que está em cache."""
+async def obter_preco_atual_do_cache(): # Tornamos a função async
+    """Endpoint que retorna o preço do cache, ou força uma atualização se o cache estiver vazio."""
     if cache_preco.get("preco_brl") is None:
-        raise HTTPException(status_code=503, detail="O preço ainda não está disponível no cache.")
-    # Este endpoint agora é usado apenas pelo app Android antigo.
-    # A nova versão do app Android deve chamar um endpoint mais completo.
-    return {"last": str(cache_preco["preco_brl"])}
+        print("INFO: Cache vazio no endpoint /preco-atual. Forçando atualização...")
+        await atualizar_preco_no_cache() # Chama a função de busca imediatamente
+
+    # Verifica novamente após a tentativa de atualização
+    preco_final = cache_preco.get("preco_brl")
+    if preco_final is None:
+        # Se mesmo após a tentativa o cache ainda estiver vazio, retorna um erro.
+        raise HTTPException(status_code=503, detail="Não foi possível obter o preço da API externa no momento.")
+
+    return {"bitcoin": {"brl": preco_final}}
 
 @app.post("/alertas/{tipo}", status_code=201, tags=["Alertas"])
 def criar_ou_atualizar_alerta(tipo: str, data: AlertaCreate):
