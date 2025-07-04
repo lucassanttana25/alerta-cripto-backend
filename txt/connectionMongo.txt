@@ -1,0 +1,6 @@
+py-user
+
+4Ed6yEfL212IhMXL
+
+
+mongodb+srv://py-user:4Ed6yEfL212IhMXL@alertacripto.kgyn5m6.mongodb.net/?retryWrites=true&w=majority&appName=alertacripto
