@@ -60,7 +60,16 @@ class Dispositivo(BaseModel): token: str
 app = FastAPI(title="API de Alerta de Preço de Bitcoin", version="1.1.0")
 
 # --- Lógica de Negócio ---
-
+# Função auxiliar para buscar o preço na API da CoinGecko
+def get_bitcoin_price():
+    try:
+        response = requests.get(API_URL)
+        response.raise_for_status()
+        data = response.json()
+        return data
+    except requests.exceptions.RequestException:
+        return None
+    
 async def enviar_notificacao_push(token: str, titulo: str, corpo: str):
     """Envia uma notificação push para um token de dispositivo específico."""
     try:
@@ -156,3 +165,11 @@ def registrar_dispositivo(data: Dispositivo):
         upsert=True
     )
     return {"mensagem": "Dispositivo registrado com sucesso!"}
+
+@app.get("/preco-atual", tags=["Preço"])
+def obter_preco_atual():
+    """Endpoint para obter o preço atual do Bitcoin da CoinGecko."""
+    preco_data = get_bitcoin_price()
+    if not preco_data:
+        raise HTTPException(status_code=503, detail="Não foi possível obter o preço da API externa.")
+    return preco_data
