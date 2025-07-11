@@ -9,7 +9,7 @@ from database import alertas_collection, dispositivos_collection
 
 # Configuração da API externa
 API_URL = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
-INTERVALO_MONITORAMENTO_SEGUNDOS = 180
+INTERVALO_MONITORAMENTO_SEGUNDOS = 60
 
 cache_preco = {"preco_brl": None, "timestamp": 0}
 
