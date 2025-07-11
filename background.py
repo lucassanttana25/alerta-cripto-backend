@@ -49,21 +49,28 @@ async def monitorar_alertas_e_precos():
         
         try:
             alertas_ativos = list(alertas_collection.find({'ativo': True}))
-            if alertas_ativos: # Só imprime se houver alertas para verificar
+            if alertas_ativos:
                  print(f"INFO: Verificando {len(alertas_ativos)} alertas ativos com preço em cache de R$ {preco_atual:,.2f}")
 
             for alerta in alertas_ativos:
+                # --- O NOVO PRINT DETETIVE ---
+                try:
+                    preco_alvo_do_db = alerta['preco_alvo']
+                    print(f"DEBUG: Comparando Preço Atual: {preco_atual} (Tipo: {type(preco_atual)}) com Alvo: {preco_alvo_do_db} (Tipo: {type(preco_alvo_do_db)}) para o tipo '{alerta['tipo']}'")
+                except Exception as e:
+                    print(f"DEBUG: Erro ao ler dados do alerta: {e}")
+                # --------------------------------
+
                 alerta_atingido = False
-                # CORREÇÃO: Inicializamos as variáveis aqui
                 titulo, corpo = "", ""
 
-                # CORREÇÃO: Lógica que define o título e corpo foi re-adicionada
-                if alerta['tipo'] == 'compra' and preco_atual <= alerta['preco_alvo']:
+                # A comparação precisa ser entre dois números (float)
+                if alerta['tipo'] == 'compra' and float(preco_atual) <= float(alerta['preco_alvo']):
                     titulo = "🎯 Alerta de Compra Atingido!"
                     corpo = f"Bitcoin (MB): R$ {preco_atual:,.2f}. Alvo de R$ {alerta['preco_alvo']:,.2f} atingido."
                     alerta_atingido = True
                 
-                if alerta['tipo'] == 'venda' and preco_atual >= alerta['preco_alvo']:
+                if alerta['tipo'] == 'venda' and float(preco_atual) >= float(alerta['preco_alvo']):
                     titulo = "💸 Alerta de Venda Atingido!"
                     corpo = f"Bitcoin (MB): R$ {preco_atual:,.2f}. Alvo de R$ {alerta['preco_alvo']:,.2f} atingido."
                     alerta_atingido = True
@@ -74,7 +81,6 @@ async def monitorar_alertas_e_precos():
                     
                     dispositivos_do_usuario = list(dispositivos_collection.find({'user_email': user_email_do_alerta}))
                     for dispositivo in dispositivos_do_usuario:
-                        # Agora as variáveis 'titulo' e 'corpo' existirão aqui
                         await enviar_notificacao_push(dispositivo['token'], titulo, corpo)
                     
                     alertas_collection.update_one({'_id': alerta['_id']}, {'$set': {'ativo': False}})
