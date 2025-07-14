@@ -23,3 +23,8 @@ class User(BaseModel):
 
 class UserInDB(User):
     hashed_password: str
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    token: str # O token do dispositivo FCM

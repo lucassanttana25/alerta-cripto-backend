@@ -1,13 +1,16 @@
 # routers/auth.py
+
 import os
 from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from database import users_collection
-from models import Token
+# CORREÇÃO: Importando TODAS as coleções que vamos usar neste arquivo
+from database import users_collection, dispositivos_collection
+from models import Token, UserCreate
 
 # --- Configurações de Segurança ---
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_secret_key_for_development")
@@ -61,15 +64,24 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 # --- Endpoints ---
 @router.post("/register")
-async def register_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_in_db = users_collection.find_one({"email": form_data.username})
+async def register_user(data: UserCreate):
+    user_in_db = users_collection.find_one({"email": data.email})
     if user_in_db:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
     
-    hashed_password = get_password_hash(form_data.password)
-    new_user = {"email": form_data.username, "hashed_password": hashed_password}
+    hashed_password = get_password_hash(data.password)
+    new_user = {"email": data.email, "hashed_password": hashed_password}
     users_collection.insert_one(new_user)
-    return {"message": "Usuário criado com sucesso"}
+    
+    # Registra o dispositivo e o associa ao email do novo usuário
+    if data.token:
+        dispositivos_collection.update_one(
+            {'token': data.token},
+            {'$set': {'token': data.token, 'user_email': data.email, 'registrado_em': datetime.utcnow()}},
+            upsert=True
+        )
+        
+    return {"message": "Usuário criado e dispositivo associado com sucesso"}
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
