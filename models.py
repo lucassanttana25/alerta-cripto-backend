@@ -28,3 +28,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     token: str # O token do dispositivo FCM
+
+class UserLogin(BaseModel):
+    email: str
+    password: str

@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 
 # CORREÇÃO: Importando TODAS as coleções que vamos usar neste arquivo
 from database import users_collection, dispositivos_collection
-from models import Token, UserCreate
+from models import Token, UserCreate, UserLogin
 
 # --- Configurações de Segurança ---
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_secret_key_for_development")
@@ -84,9 +84,9 @@ async def register_user(data: UserCreate):
     return {"message": "Usuário criado e dispositivo associado com sucesso"}
 
 @router.post("/login", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = users_collection.find_one({"email": form_data.username})
-    if not user or not verify_password(form_data.password, user["hashed_password"]):
+async def login_for_access_token(data: UserLogin): # Usa o novo modelo UserLogin
+    user = users_collection.find_one({"email": data.email})
+    if not user or not verify_password(data.password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou senha incorretos",
