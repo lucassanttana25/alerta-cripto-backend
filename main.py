@@ -1,15 +1,19 @@
-# main.py (Versão Corrigida com todos os endpoints)
+# main.py
 import asyncio
 from fastapi import FastAPI, HTTPException
 
-# Importa os roteadores e as funções/variáveis necessárias dos outros arquivos
+# CORREÇÃO: A primeira importação agora é do nosso módulo de banco de dados,
+# que garante que todas as conexões (Mongo e Firebase) sejam inicializadas.
+import database
+
+# O resto das suas importações permanece o mesmo.
 from routers import auth, alertas
 from background import monitorar_alertas_e_precos, atualizar_preco_no_cache, cache_preco
 
 # --- Inicialização da Aplicação ---
 app = FastAPI(
     title="API de Alerta de Preço de Bitcoin",
-    version="2.1.0 - Refatoração Completa"
+    version="2.2.0 - Inicialização Centralizada"
 )
 
 @app.on_event("startup")
@@ -22,7 +26,7 @@ async def startup_event():
 app.include_router(auth.router)
 app.include_router(alertas.router)
 
-# --- Endpoints Públicos ---
+# --- Endpoints Públicos (O seu código funcional, mantido) ---
 
 @app.get("/", tags=["Status"])
 def read_root():
